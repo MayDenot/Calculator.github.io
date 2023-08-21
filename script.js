@@ -135,21 +135,41 @@ const btnSave = document.querySelector('.save');
 const olResults = document.querySelector('.ol');
 const spanResults = document.querySelector('.zero-results');
 
+const historyResults = JSON.parse(localStorage.getItem("historyResults")) || [];
+
+function saveLocalStorage() {
+    localStorage.setItem("historyResults", JSON.stringify(historyResults));
+}
+
+const addResultsHistory = JSON.parse(localStorage.getItem("historyResults"));
+
 btnSave.addEventListener('click', () => {
     const results = currentOperandTextElement.textContent;
 
     if (results !== "") {
         const li = document.createElement('li');
-        li.textContent = results;
+        const uniqueId = Date.now();
+        li.dataset.id = uniqueId;
 
-        li.appendChild(addBtnDelete());
+        li.textContent = results;
+        li.appendChild(addBtnDelete(uniqueId));
         olResults.appendChild(li);
 
         spanResults.style.display = 'none';
 
-        const historyResults = localStorage.setItem("historial", results);
-        console.log(historyResults)
+        historyResults.push({ id: uniqueId, result: results });
+        saveLocalStorage();
     }
+});
+
+document.addEventListener("DOMContentLoaded", (e) => {
+    addResultsHistory.forEach(item => {
+        const li = document.createElement('li');
+        li.dataset.id = item.id;
+        li.textContent = item.result;
+        li.appendChild(addBtnDelete(item.id));
+        olResults.appendChild(li);
+    });
 });
 
 function addBtnDelete() {
@@ -159,25 +179,22 @@ function addBtnDelete() {
     btnDelete.className = "btn-delete";
 
     btnDelete.addEventListener('click', (e) => {
-        const item = e.target.parentElement;
-        olResults.removeChild(item);
+        const li = e.target.closest('li');
+        if (li) {
+            const id = li.dataset.id;
 
-        const items = document.querySelectorAll('li');
+            const index = historyResults.findIndex(item => item.id === Number(id));
+            if (index !== -1) {
+                historyResults.splice(index, 1);
+                saveLocalStorage();
+            }
 
-        if (items.length === 0) {
-            spanResults.style.display = "block";
+            li.remove();
         }
     });
 
     return btnDelete;
 }
-
-// -------------------------------------
-// Falta hacer:
-// Hacer que quede guardado el historial 
-// para cada usuario --> LocalStorage.
-// -------------------------------------
-
 
 window.addEventListener('keyup', (e) => {
     switch (e.key) {
