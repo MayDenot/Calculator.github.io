@@ -1,15 +1,12 @@
-// DOM Elements
-// 1. Display
 const previousOperandTextElement = document.querySelector('[data-previous-operand]');
 const currentOperandTextElement = document.querySelector('[data-current-operand]');
-// 2. Buttons
 const numberButtons = document.querySelectorAll('[data-number]');
 const operatorButton = document.querySelectorAll('[data-operator]');
 const allClearButton = document.querySelector('[data-all-clear]');
 const deleteButton = document.querySelector('[data-delete]');
 const equalsButton = document.querySelector('[data-equals]');
+const btnLastResult = document.querySelector('.last-saved-result');
 
-// Constructor
 class Calculator {
     constructor(previousOperandTextElement, currentOperandTextElement) {
         this.previousOperandTextElement = previousOperandTextElement;
@@ -32,26 +29,26 @@ class Calculator {
 
     appendDigit(digit) {
         // reject inputs that render the operand invalid (multiple decimal points)
-        if(digit === '.' && this.currentOperand.includes('.')) return;
+        if (digit === '.' && this.currentOperand.includes('.')) return;
         // if digit is zero, do not allow multiple initial zeroes
-        if(digit === '0' && this.currentOperand === '0') return;
+        if (digit === '0' && this.currentOperand === '0') return;
         // if digit is a zero and a number is added, remove the zero
-        if(this.currentOperand === '0' && digit !== '0' && digit !== '.') {
+        if (this.currentOperand === '0' && digit !== '0' && digit !== '.') {
             this.currentOperand = '';
         }
         //if digit is '.' and there are no prior digits, add a zero
-        if(digit === '.' && this.currentOperand === '') this.currentOperand = '0';
+        if (digit === '.' && this.currentOperand === '') this.currentOperand = '0';
         // clean unnecessary zeroes when appending
         this.currentOperand += digit;
     }
 
     selectOperation(operation) {
-        if(this.currentOperand === '' && operation == '-') {
+        if (this.currentOperand === '' && operation == '-') {
             this.appendDigit(operation);
             return;
         }
-        if(this.currentOperand === '') return;
-        if(this.previousOperand !== '') this.calculate();
+        if (this.currentOperand === '') return;
+        if (this.previousOperand !== '') this.calculate();
         this.operation = operation;
         this.previousOperand = this.currentOperand;
         this.currentOperand = '';
@@ -59,12 +56,12 @@ class Calculator {
 
     calculate() {
         let result;
-        const prev = parseFloat(this.previousOperand) 
-        const current = parseFloat(this.currentOperand) 
-        if(isNaN(prev) || isNaN(current)) return;
-        if(!isNaN(prev) && current === 0) return;
-        
-        switch(this.operation) {
+        const prev = parseFloat(this.previousOperand)
+        const current = parseFloat(this.currentOperand)
+        if (isNaN(prev) || isNaN(current)) return;
+        if (!isNaN(prev) && current === 0) return;
+
+        switch (this.operation) {
             case '÷':
                 result = prev / current;
                 break;
@@ -88,7 +85,7 @@ class Calculator {
 
     updateDisplay() {
         this.currentOperandTextElement.innerText = this.currentOperand;
-        if(this.operation != undefined) {
+        if (this.operation != undefined) {
             this.previousOperandTextElement.innerText = `${this.previousOperand} ${this.operation}`;
         } else {
             this.previousOperandTextElement.innerText = '';
@@ -98,9 +95,7 @@ class Calculator {
 
 const calculator = new Calculator(previousOperandTextElement, currentOperandTextElement);
 
-// Event Listeners: buttons
-
-allClearButton.addEventListener('click', button => {
+allClearButton.addEventListener('click', () => {
     calculator.allClear();
     calculator.updateDisplay();
 });
@@ -129,10 +124,63 @@ equalsButton.addEventListener('click', () => {
     calculator.updateDisplay();
 });
 
-// Event Listeners: keyboard
+btnLastResult.addEventListener('click', () => {
+    const lastSavedResult = olResults.lastChild.textContent;
+    const lSRF = lastSavedResult.substring(0, lastSavedResult.length - 1);
+    calculator.appendDigit(lSRF);
+    calculator.updateDisplay();
+});
+
+const btnSave = document.querySelector('.save');
+const olResults = document.querySelector('.ol');
+const spanResults = document.querySelector('.zero-results');
+
+btnSave.addEventListener('click', () => {
+    const results = currentOperandTextElement.textContent;
+
+    if (results !== "") {
+        const li = document.createElement('li');
+        li.textContent = results;
+
+        li.appendChild(addBtnDelete());
+        olResults.appendChild(li);
+
+        spanResults.style.display = 'none';
+
+        const historyResults = localStorage.setItem("historial", results);
+        console.log(historyResults)
+    }
+});
+
+function addBtnDelete() {
+    const btnDelete = document.createElement('button');
+
+    btnDelete.textContent = "X";
+    btnDelete.className = "btn-delete";
+
+    btnDelete.addEventListener('click', (e) => {
+        const item = e.target.parentElement;
+        olResults.removeChild(item);
+
+        const items = document.querySelectorAll('li');
+
+        if (items.length === 0) {
+            spanResults.style.display = "block";
+        }
+    });
+
+    return btnDelete;
+}
+
+// -------------------------------------
+// Falta hacer:
+// Hacer que quede guardado el historial 
+// para cada usuario --> LocalStorage.
+// -------------------------------------
+
 
 window.addEventListener('keyup', (e) => {
-    switch(e.key) {
+    switch (e.key) {
         case 'Backspace':
         case 'Delete':
             calculator.deleteDigit();
@@ -148,12 +196,12 @@ window.addEventListener('keyup', (e) => {
             break;
         case '1': case '2': case '3':
         case '4': case '5': case '6':
-        case '7': case '8': case '9': 
+        case '7': case '8': case '9':
         case '.': case '0':
             calculator.appendDigit(e.key);
             calculator.updateDisplay();
             break;
-        case '/': 
+        case '/':
             calculator.selectOperation('÷');
             calculator.updateDisplay();
             break;
@@ -161,8 +209,8 @@ window.addEventListener('keyup', (e) => {
             calculator.selectOperation(e.key);
             calculator.updateDisplay();
             break;
-            default:
-                break;
-        }
-        
+        default:
+            break;
+    }
+
 });
